@@ -1,16 +1,10 @@
-import { config } from "dotenv";
-import type { NextFunction, Request, Response } from "express";
-config()
+import type { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken"
-import mongoose from "mongoose";
-import { mongo } from "mongoose";
 import type { UserRequest } from "../types/express/index.js";
+import { JWT_SECRET } from "../config.js";
+import mongoose from "mongoose";
 
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET is not defined ")
-}
 
 
 export const authMiddleware = async (req: UserRequest, res: Response, next: NextFunction) => {
@@ -23,15 +17,14 @@ export const authMiddleware = async (req: UserRequest, res: Response, next: Next
             })
         }
 
-        const decoded = jwt.verify(token, JWT_SECRET);
-
+        const decoded  = jwt.verify(token, JWT_SECRET);
         if (!decoded) {
             return res.status(501).json({
                 success: false,
                 message: "Invalid Token"
             })
         }
-        req.user = { id: new mongoose.Types.ObjectId(decoded.toString()) };
+        req.user = { id: new mongoose.Types.ObjectId(decoded.id.toString()) };
         next()
 
     } catch (error) {

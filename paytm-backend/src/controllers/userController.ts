@@ -2,16 +2,9 @@ import type { Request, Response } from "express";
 import UserModel from "../models/userModel.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { config } from "dotenv";
 import { MongooseError } from "mongoose";
 import type { UserRequest } from "../types/express/index.js";
-config();
-
-
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET is not Defined")
-}
+import { JWT_SECRET } from "../config.js";
 
 
 export const SignIn = async (req: Request, res: Response) => {
@@ -38,7 +31,7 @@ export const SignIn = async (req: Request, res: Response) => {
             username,
             password: hashPass
         })
-        const token = jwt.sign(user._id, JWT_SECRET, {
+        const token = jwt.sign({ id: user._id }, JWT_SECRET, {
             expiresIn: "2d"
         });
         return res.status(201).json({
@@ -90,7 +83,7 @@ export const Login = async (req: Request, res: Response) => {
                 message: "Incorrect Username or Password"
             })
         }
-        const token = await jwt.sign(user._id, JWT_SECRET, {
+        const token = await jwt.sign({ id: user._id }, JWT_SECRET, {
             expiresIn: "2d"
         });
         return res.status(200).json({
@@ -117,7 +110,7 @@ export const getProfile = async (req: UserRequest, res: Response) => {
                 message: "Unauthorized"
             })
         }
-        const user = UserModel.findById(userId);
+        const user = await UserModel.findById(userId);
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -180,6 +173,38 @@ export const updateUser = async (req: UserRequest, res: Response) => {
             success: false,
             message: "Internal Server Error",
             error
+        })
+    }
+}
+
+
+export const findUser = async (req: UserRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(501).json({
+                success: false,
+                message: "Unauthorized"
+            })
+        }
+        const query = req.params.query;
+        if (!query) {
+            return res.status(400).json({
+                success: false,
+                message: "Query not found "
+            })
+        }
+        const users = await UserModel.find({ username: query });
+
+        return res.status(200).json({
+            sucess: true,
+            data: users,
+            message: users ? "" : "No user found "
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
         })
     }
 }

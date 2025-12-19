@@ -1,11 +1,8 @@
 import mongoose, { MongooseError } from "mongoose";
-import { config } from "dotenv";
-config();
-const MONGO_URI = process.env.MONGO_URI;
+import { MONGO_URI } from "../config.js";
 
-if (!MONGO_URI) {
-    throw new Error("MONGO_URI is not defined")
-}
+
+
 
 export const connectDB = async () => {
     try {
