@@ -24,6 +24,7 @@ export const authMiddleware = async (req: UserRequest, res: Response, next: Next
                 message: "Invalid Token"
             })
         }
+        //@ts-ignore
         req.user = { id: new mongoose.Types.ObjectId(decoded.id.toString()) };
         next()
 
