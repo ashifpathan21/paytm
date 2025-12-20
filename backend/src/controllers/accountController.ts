@@ -6,6 +6,15 @@ import UserModel from "../models/userModel.js";
 import mongoose from "mongoose";
 import TransactionModel from "../models/transactionModel.js";
 import { decodeBalance, encodeBalance } from "../utils/balance.js";
+export interface Transaction {
+    amount: number;
+    createdAt: Date;
+    from: string;
+    mode: "TRANSFER" | "RECEIVED";
+    tag: string;
+    to: string;
+    _id: string;
+}
 
 export const createAccount = async (req: UserRequest, res: Response) => {
     const session = await mongoose.startSession();
@@ -138,7 +147,8 @@ export const getTransactions = async (req: UserRequest, res: Response) => {
         return res.status(StatusCodes.OK).json({
             success: true,
             message: "Balance Fetched Successfully",
-            data: account.transactions
+            //@ts-ignore
+            data: account.transactions.sort((a, b) => b?.createdAt - a?.createdAt)
         })
     } catch (error) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -158,7 +168,7 @@ export const getTransactionsWithFriend = async (req: UserRequest, res: Response)
                 messgae: "Unauthorized"
             })
         }
-        const user = await UserModel.findById(userId);
+        const user = await UserModel.findById(userId)
         if (!user) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
@@ -178,12 +188,21 @@ export const getTransactionsWithFriend = async (req: UserRequest, res: Response)
                 message: "User Not Found"
             })
         }
-        const transactions = await TransactionModel.find({ $or: [{ from: userId, to: friendId }, { from: friendId, to: userId }] }).sort("createdAt")
-
+        const account = await AccountModel.findOne({ user: userId }).populate("transactions").exec()
+        const transactions = account?.transactions;
+        if (!transactions) {
+            return res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Balance Fetched Successfully",
+                data: []
+            })
+        }
+        //@ts-ignore
+        const filtered = transactions.filter((transaction) => transaction?.to?.toString() === friendId?.toString() || transaction?.from?.toString() === friendId?.toString()).sort((a, b) => b?.createdAt - a?.createdAt);
         return res.status(StatusCodes.OK).json({
             success: true,
             message: "Balance Fetched Successfully",
-            data: transactions
+            data: filtered
         })
     } catch (error) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -201,7 +220,6 @@ export const transferAmount = async (req: UserRequest, res: Response) => {
         const userId = req.user?.id;
         const { to, tag } = req.body
         const amount = Number(req.body.amount)
-        console.log("Transfering ", amount)
         if (!userId) {
             throw new Error("Unauthorized")
         }

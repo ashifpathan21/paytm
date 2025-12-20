@@ -1,7 +1,12 @@
-import { useState } from "react";
-import { signin, type SIGN_IN_DATA } from "../api/services/userService";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../redux/store";
+import { useEffect, useState } from "react";
+import {
+  findUsername,
+  signin,
+  type SIGN_IN_DATA,
+} from "../api/services/userService";
+
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, Store } from "../redux/store";
 import { useNavigate } from "react-router-dom";
 import { removeLoading, setLoading } from "../redux/slices/pageSlice";
 import { Button } from "@/components/ui/button";
@@ -17,6 +22,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
+import { useDebounce } from "@/hooks/useDebounce";
+import { CheckCheck, X } from "lucide-react";
+import toast from "react-hot-toast";
 const Signup = () => {
   const [data, setData] = useState<SIGN_IN_DATA>({
     firstName: "",
@@ -24,15 +32,39 @@ const Signup = () => {
     username: "",
     password: "",
   });
+  const { isLoading } = useSelector((state: Store) => state.page);
+  const [response, setResponse] = useState<{
+    success: Boolean;
+    message: String;
+  }>();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const debouncedSearchTerm = useDebounce(data.username, 500);
+  
+  const search = async (debouncedSearchTerm: string) => {
+    console.log("Fetching data for:", debouncedSearchTerm);
+    const res = await findUsername(debouncedSearchTerm);
+    setResponse(res);
+  };
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      if (debouncedSearchTerm.length < 3) {
+        return;
+      }
+      search(debouncedSearchTerm);
+    }
+  }, [debouncedSearchTerm]);
 
   const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!data) {
       return;
     }
+    if (!response?.success) {
+      toast.error("Username not available");
+      return;
+    }
     dispatch(setLoading());
-    e.preventDefault();
     await dispatch(signin(data, navigate, removeLoading));
   };
   return (
@@ -79,7 +111,7 @@ const Signup = () => {
                 onChange={(e) => setData({ ...data, lastName: e.target.value })}
               />
             </section>
-            <section>
+            <section className="flex flex-col gap-2">
               <Label htmlFor="username">Username :</Label>
               <Input
                 type="text"
@@ -91,6 +123,24 @@ const Signup = () => {
                 minLength={3}
                 onChange={(e) => setData({ ...data, username: e.target.value })}
               />
+              {response && (
+                <div className="flex gap-3 items-center p-1 px-2">
+                  {response?.success ? (
+                    <span className="p-1 rounded-full texl-sm text-black bg-green-500">
+                      <CheckCheck className="font-light text-sm " />
+                    </span>
+                  ) : (
+                    <span className="p-1 rounded-full texl-sm text-black bg-red-500">
+                      <X className="font-light text-sm " />
+                    </span>
+                  )}
+                  {response?.message && (
+                    <p className=" lowercase text-slate-600 font-semibold ">
+                      {response.message}
+                    </p>
+                  )}
+                </div>
+              )}
             </section>
             <section>
               <Label htmlFor="password">Password :</Label>
@@ -105,6 +155,7 @@ const Signup = () => {
               />
             </section>
             <Button
+              disabled={isLoading}
               type="submit"
               className="w-full"
               variant="default"

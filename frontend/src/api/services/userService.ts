@@ -3,7 +3,7 @@ import { USER_ENDPOINTS } from "../api";
 import { apiConnector } from "../apiConnector";
 import type { AxiosResponse } from "axios";
 import type { AppDispatch } from "../../redux/store";
-import { setToken, setUser } from "../../redux/slices/userSlice";
+import { deleteToken, setToken, setUser } from "../../redux/slices/userSlice";
 import type { NavigateFunction } from "react-router-dom";
 import type { ActionCreatorWithoutPayload } from "@reduxjs/toolkit";
 
@@ -17,16 +17,17 @@ export interface SIGN_IN_DATA {
 
 
 export const signin = (data: SIGN_IN_DATA, navigate: NavigateFunction, removeLoading: ActionCreatorWithoutPayload) => async (dispatch: AppDispatch) => {
+    const toastId = toast.loading("Creating Account")
     try {
-        console.log(data)
         const response: AxiosResponse = await apiConnector({ method: "POST", url: USER_ENDPOINTS.SIGNIN, data });
         toast.success(response.data.message);
         dispatch(setToken(response.data.data));
-        navigate('/')
+        navigate('/login')
     } catch (error: any) {
-        toast.error(error.response.message)
+        toast.error(error.response.data.message)
     } finally {
         dispatch(removeLoading())
+        toast.dismiss(toastId)
     }
 }
 
@@ -36,6 +37,7 @@ export interface LOG_IN_DATA {
 }
 
 export const login = (data: LOG_IN_DATA, navigate: NavigateFunction, removeLoading: ActionCreatorWithoutPayload) => async (dispatch: AppDispatch) => {
+    const toastId = toast.loading("logging In")
     try {
         const response: AxiosResponse = await apiConnector({ method: "POST", url: USER_ENDPOINTS.LOGIN, data });
         toast.success(response.data.message);
@@ -43,20 +45,23 @@ export const login = (data: LOG_IN_DATA, navigate: NavigateFunction, removeLoadi
         dispatch(setToken(response.data.data));
         navigate('/')
     } catch (error: any) {
-        toast.error(error.response.message)
+        toast.error(error.response.data.message)
     } finally {
         dispatch(removeLoading())
+        toast.dismiss(toastId)
     }
 }
 
 
-export const getProfile = (token: String) => async (dispatch: AppDispatch) => {
+export const getProfile = (token: string, navigate: NavigateFunction) => async (dispatch: AppDispatch) => {
     try {
         const response = await apiConnector({ method: "GET", url: USER_ENDPOINTS.GET_PROFILE, headers: { Authorization: `Bearer ${token}` } });
-        toast.success(response.data.message);
         dispatch(setUser(response.data.data));
+        navigate('/dashboard')
     } catch (error: any) {
-        toast.error(error.response.message)
+        dispatch(deleteToken())
+        navigate("/")
+        toast.error(error.response.data.message)
     }
 }
 
@@ -68,12 +73,16 @@ export interface UPDATE_DATA {
 }
 
 
-export const updateUser = async (data: UPDATE_DATA, token: String) => {
+export const updateUser = (data: UPDATE_DATA, token: String, removeLoading: ActionCreatorWithoutPayload) => async (dispatch: AppDispatch) => {
+    const toastId = toast.loading("Updating your details")
     try {
         const response = await apiConnector({ method: "PUT", url: USER_ENDPOINTS.UPDATE, data, headers: { Authorization: `Bearer ${token}` } });
         toast.success(response.data.message);
     } catch (error: any) {
-        toast.error(error.response.message)
+        toast.error(error.response.data.message)
+    } finally {
+        dispatch(removeLoading())
+        toast.dismiss(toastId)
     }
 }
 
@@ -82,16 +91,16 @@ export const findUser = async (query: String, token: String) => {
         const response = await apiConnector({ method: "GET", url: `${USER_ENDPOINTS.FIND_USER}/${query}`, headers: { Authorization: `Bearer ${token}` } });
         return response.data.data;
     } catch (error: any) {
-        toast.error(error.response.message)
+        toast.error(error.response.data.message)
     }
 }
 
 
 export const findUsername = async (username: String) => {
     try {
-        const response = await apiConnector({ method: "GET", url: USER_ENDPOINTS.USERNAME_CHECK, data: { username } })
+        const response = await apiConnector({ method: "POST", url: USER_ENDPOINTS.USERNAME_CHECK, data: { username } })
         return response.data
     } catch (error: any) {
-        toast.error(error.response.message)
+        toast.error(error.response.data.message)
     }
 }

@@ -1,13 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+export interface User {
+    _id: string,
+    firstName: string,
+    lastName: string,
+    username: string,
+    account?: string
+}
+
 const initialState: {
-    user: object,
+    user?: User,
     token: string,
-    transactions: object[]
+
 } = {
-    user: {},
+    user: undefined,
     token: localStorage.getItem("token") || "",
-    transactions: []
+
 }
 
 const userSlice = createSlice({
@@ -25,11 +33,9 @@ const userSlice = createSlice({
             state.token = "";
             localStorage.removeItem("token");
         },
-        setTransactions(state, action) {
-            state.transactions = action.payload
-        }
+
     }
 })
 
-export const { setUser, setToken, deleteToken, setTransactions } = userSlice.actions
+export const { setUser, setToken, deleteToken } = userSlice.actions
 export default userSlice.reducer;

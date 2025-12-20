@@ -9,7 +9,7 @@ const router = express.Router();
 router.post("/login", validateData(LogBody), Login)
 router.post("/signin", validateData(SignBody), SignIn)
 router.put("/update", validateData(UpdateBody), authMiddleware, updateUser);
-router.get("/username", validateData(UsernameBody), isAvailable);
+router.post("/username", validateData(UsernameBody), isAvailable);
 router.get('/find/:query', authMiddleware, findUser)
 router.get('/', authMiddleware, getProfile)
 

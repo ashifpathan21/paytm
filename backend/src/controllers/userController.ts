@@ -139,9 +139,9 @@ export const getProfile = async (req: UserRequest, res: Response) => {
 export const isAvailable = async (req: Request, res: Response) => {
     try {
         const { username } = req.body;
-        const user = await UserModel.findOne(username);
+        const user = await UserModel.findOne({ username });
         return res.status(StatusCodes.OK).json({
-            success: true,
+            success: !user,
             message: user ? "Not Available" : "Available"
         })
     } catch (error) {

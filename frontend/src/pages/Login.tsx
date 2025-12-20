@@ -9,14 +9,15 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { removeLoading, setLoading } from "@/redux/slices/pageSlice";
-import type { AppDispatch } from "@/redux/store";
+import type { AppDispatch, Store } from "@/redux/store";
 import { Label } from "@radix-ui/react-label";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { isLoading } = useSelector((state: Store) => state.page);
   const navigate = useNavigate();
   const [data, setData] = useState<LOG_IN_DATA>({
     username: "",
@@ -57,7 +58,12 @@ const Login = () => {
                 placeholder="Enter Your Password"
               />
             </section>
-            <Button className="w-full" size={"lg"} variant="default">
+            <Button
+              disabled={isLoading}
+              className="w-full"
+              size={"lg"}
+              variant="default"
+            >
               Log In
             </Button>
           </form>
