@@ -63,7 +63,7 @@ const Dashboard = () => {
                 {"X".repeat(user?.account.length - 4) +
                   user?.account.slice(user.account.length - 4)}
               </p>
-              <section className="flex items-center gap-4 " >
+              <section className="flex items-center gap-4 ">
                 <Button onClick={() => navigate("/transactions/")}>
                   View Transcations
                 </Button>
@@ -96,53 +96,60 @@ const Dashboard = () => {
           </section>
         )}
       </section>
-      <section className="w-full p-3 px-8">
-        <InputGroup>
-          <InputGroupInput
-            onChange={(e) => setQuery(e.target.value)}
-            value={query}
-            placeholder="Search for Users"
-          />
-          <InputGroupAddon>
-            <Search />
-          </InputGroupAddon>
-        </InputGroup>
+      {user?.account && (
+        <section className="w-full p-3 px-8">
+          <InputGroup>
+            <InputGroupInput
+              onChange={(e) => setQuery(e.target.value)}
+              value={query}
+              placeholder="Search for Users"
+            />
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+          </InputGroup>
 
-        {users?.length > 0 && (
-          <section className="flex flex-col gap-3 py-4 ">
-            {users.map((friend) => (
-              <section
-                className="flex justify-between items-center px-4 p-2 gap-4 rounded-lg shadow-sm shadow-slate-600  "
-                key={friend._id}
-              >
-                <section>
-                  <h2 className="text-lg font-sans capitalize font-semibold">
-                    {friend.firstName} {friend.lastName}
-                  </h2>
-                  <p className="text-sm text-gray-600 ">@{friend.username}</p>
-                </section>
-                <section className="flex items-center gap-3 " >
-                  <Button variant={"link"} 
-                    onClick={() => navigate(`/transactions/${friend._id}`)}
-                  >
-                    View Transcations
-                  </Button>
+          {users?.length > 0 && (
+            <section className="flex flex-col gap-3 py-4 ">
+              {users.map((friend) => (
+                <section
+                  className="flex justify-between items-center px-4 p-2 gap-4 rounded-lg shadow-sm shadow-slate-600  "
+                  key={friend._id}
+                >
+                  <section>
+                    <h2 className=" font-sans capitalize font-semibold">
+                      {friend.firstName} {friend.lastName}
+                    </h2>
+                    <p className="text-sm text-gray-600 ">@{friend.username}</p>
+                  </section>
+                  <section className="flex items-center gap-3 ">
+                    <Button
+                      variant={"link"}
+                      onClick={() =>
+                        navigate(`/transactions/${friend._id}`, {
+                          state: { friend },
+                        })
+                      }
+                    >
+                      Transcations
+                    </Button>
 
-                  <Button
-                    variant="outline"
-                    size={"lg"}
-                    onClick={() =>
-                      navigate(`/pay/${friend._id}`, { state: { friend } })
-                    }
-                  >
-                    Pay
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size={"lg"}
+                      onClick={() =>
+                        navigate(`/pay/${friend._id}`, { state: { friend } })
+                      }
+                    >
+                      Pay
+                    </Button>
+                  </section>
                 </section>
-              </section>
-            ))}
-          </section>
-        )}
-      </section>
+              ))}
+            </section>
+          )}
+        </section>
+      )}
     </main>
   );
 };

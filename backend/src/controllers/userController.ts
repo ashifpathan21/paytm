@@ -208,11 +208,11 @@ export const findUser = async (req: UserRequest, res: Response) => {
                 ]
             }
         );
-
+        const final = users?.filter((user) => user._id?.toString() !== userId.toString())
         return res.status(200).json({
             sucess: true,
-            data: users,
-            message: users ? "" : "No user found "
+            data: final,
+            message: final ? "" : "No user found "
         })
     } catch (error) {
         return res.status(500).json({
@@ -221,3 +221,5 @@ export const findUser = async (req: UserRequest, res: Response) => {
         })
     }
 }
+
+

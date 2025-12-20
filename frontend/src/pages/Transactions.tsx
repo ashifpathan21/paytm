@@ -1,38 +1,41 @@
 import { getTranscations } from "@/api/services/accountService";
 import { Button } from "@/components/ui/button";
+import type { User } from "@/redux/slices/userSlice";
 import type { Store } from "@/redux/store";
 import { ArrowUpIcon, StepBack } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 export interface Transaction {
   amount: number;
   createdAt: Date;
-  from: string;
+  from: User;
   mode: "TRANSFER" | "RECEIVED";
   tag: string;
-  to: string;
+  to: User;
   _id: string;
 }
 const Transactions = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const friend: User = location.state?.friend;
   const params = useParams();
   const { id } = params;
   const { token } = useSelector((state: Store) => state.user);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const getTransaction = async () => {
     const res = await getTranscations(token, id);
-    console.log(res);
     setTransactions(res.data);
   };
+
   useEffect(() => {
     getTransaction();
   }, []);
 
   return (
     <main>
-      <section className="p-3">
+      <section className="p-3 flex justify-between items-center ">
         <Button
           onClick={() => navigate(-1)}
           variant={"destructive"}
@@ -40,6 +43,9 @@ const Transactions = () => {
         >
           <StepBack />
         </Button>
+        {friend && friend.firstName && (
+          <h2 className="capitalize text-2xl font-mono w-full text-center font-semibold" >{`${friend.firstName} ${friend.lastName}`}</h2>
+        )}
       </section>
       {transactions?.length > 0 ? (
         <section className="p-4 flex flex-col gap-3 justify-start">
@@ -60,10 +66,15 @@ const Transactions = () => {
                   <h2 className="font-semibold font-mono">
                     {transaction?.tag}
                   </h2>
-                  <p className="text-sm">
+                  <p className="text-sm capitalize font-semibold ">
                     {transaction?.mode === "TRANSFER"
-                      ? transaction.to
-                      : transaction.from}
+                      ? `${transaction.to.firstName}  ${transaction.to.lastName}`
+                      : `${transaction.from.firstName} ${transaction.from.lastName}`}
+                  </p>
+                  <p className="text-sm text-slate-700">
+                    {transaction?.mode === "TRANSFER"
+                      ? `@${transaction.to.username}`
+                      : `@${transaction.from.username}`}
                   </p>
                   <p className="text-sm text-slate-500">
                     {transaction?.createdAt?.toLocaleString()}

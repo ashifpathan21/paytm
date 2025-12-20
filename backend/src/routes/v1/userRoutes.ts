@@ -14,4 +14,5 @@ router.get('/find/:query', authMiddleware, findUser)
 router.get('/', authMiddleware, getProfile)
 
 
+
 export default router 

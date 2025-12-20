@@ -136,19 +136,25 @@ export const getTransactions = async (req: UserRequest, res: Response) => {
             })
         }
 
-        const account = await AccountModel.findOne({ user: userId }).populate("transactions").exec()
+        const account = await AccountModel.findOne({ user: userId }).populate({
+            path: "transactions",
+            populate: {
+                path: "from to"
+            }
+        }).exec()
         if (!account) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: "Account Not Exist"
             })
         }
+        //@ts-ignore
+        const transactions = account.transactions.sort((a, b) => b?.createdAt - a?.createdAt)
 
         return res.status(StatusCodes.OK).json({
             success: true,
-            message: "Balance Fetched Successfully",
-            //@ts-ignore
-            data: account.transactions.sort((a, b) => b?.createdAt - a?.createdAt)
+            message: "Transactions Fetched Successfully",
+            data: transactions
         })
     } catch (error) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -188,20 +194,26 @@ export const getTransactionsWithFriend = async (req: UserRequest, res: Response)
                 message: "User Not Found"
             })
         }
-        const account = await AccountModel.findOne({ user: userId }).populate("transactions").exec()
+        const account = await AccountModel.findOne({ user: userId }).populate({
+            path: "transactions",
+            populate: {
+                path: "from to"
+            }
+        }).exec()
         const transactions = account?.transactions;
         if (!transactions) {
             return res.status(StatusCodes.OK).json({
                 success: true,
-                message: "Balance Fetched Successfully",
+                message: "Transactions Fetched Successfully",
                 data: []
             })
         }
         //@ts-ignore
-        const filtered = transactions.filter((transaction) => transaction?.to?.toString() === friendId?.toString() || transaction?.from?.toString() === friendId?.toString()).sort((a, b) => b?.createdAt - a?.createdAt);
+        const filtered = transactions.filter((transaction) => transaction?.to?._id?.toString() === friendId?.toString() || transaction?.from?._id?.toString() === friendId?.toString()).sort((a, b) => b?.createdAt - a?.createdAt);
+
         return res.status(StatusCodes.OK).json({
             success: true,
-            message: "Balance Fetched Successfully",
+            message: "Transactions Fetched Successfully",
             data: filtered
         })
     } catch (error) {
